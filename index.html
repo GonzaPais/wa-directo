@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b141a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>WhatsApp Directo</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <style>
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at top,#16362d 0%,#0b141a 34%,#081015 100%);color:#e9edef;display:grid;place-items:center;padding:24px}
+    .app{width:min(100%,430px);background:rgba(17,27,33,.96);border:1px solid rgba(255,255,255,.06);border-radius:28px;padding:28px 22px 24px;box-shadow:0 24px 70px rgba(0,0,0,.38)}
+    .logo{width:74px;height:74px;border-radius:22px;display:grid;place-items:center;margin:0 auto 16px;background:#25d366;box-shadow:0 12px 28px rgba(37,211,102,.25);font-size:38px}
+    h1{font-size:27px;line-height:1.1;text-align:center;margin:0 0 8px}
+    .sub{color:#8696a0;text-align:center;font-size:14px;line-height:1.45;margin-bottom:24px}
+    label{display:block;font-size:13px;color:#b9c4ca;margin:0 0 8px 3px;font-weight:600}
+    input{width:100%;border:1px solid transparent;outline:none;background:#202c33;color:#e9edef;border-radius:16px;padding:17px 16px;font-size:21px;letter-spacing:.5px}
+    input:focus{border-color:rgba(37,211,102,.65)}
+    .hint{color:#8696a0;font-size:12px;margin:8px 3px 18px}
+    button{width:100%;border:0;border-radius:16px;padding:16px;font-size:17px;font-weight:750;background:#25d366;color:#062d16;cursor:pointer;box-shadow:0 10px 24px rgba(37,211,102,.16)}
+    button:active{transform:scale(.985);background:#1faa52}
+    .error{min-height:21px;color:#ff6b6b;font-size:13px;padding:10px 3px 0}
+    .foot{text-align:center;color:#667781;font-size:11px;margin-top:16px}
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="logo">💬</div>
+    <h1>WhatsApp Directo</h1>
+    <div class="sub">Abrí un chat sin guardar el contacto.</div>
+    <label>País</label>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px">
+      <button type="button" id="uyBtn">🇺🇾 Uruguay +598</button>
+      <button type="button" id="brBtn" style="background:#202c33;color:#e9edef;box-shadow:none">🇧🇷 Brasil +55</button>
+    </div>
+    <label for="phone">Número de celular</label>
+    <input id="phone" type="tel" inputmode="tel" autocomplete="off" placeholder="099 123 456" autofocus>
+    <div id="hint" class="hint">Podés escribir 099123456, 59899123456 o +59899123456.</div>
+    <label for="message">Mensaje <span style="color:#8696a0;font-weight:400">(opcional)</span></label>
+    <textarea id="message" placeholder="Escribí un mensaje para dejarlo preparado en WhatsApp..." style="width:100%;min-height:105px;resize:vertical;border:1px solid transparent;outline:none;background:#202c33;color:#e9edef;border-radius:16px;padding:15px 16px;font:inherit;font-size:15px;margin-bottom:18px"></textarea>
+    <button id="openBtn">ABRIR CHAT</button>
+    <div id="error" class="error"></div>
+    <div id="foot" class="foot">Uruguay · código +598 automático</div>
+  </main>
+<script>
+const input=document.getElementById('phone'), message=document.getElementById('message'),
+error=document.getElementById('error'), btn=document.getElementById('openBtn'),
+uyBtn=document.getElementById('uyBtn'), brBtn=document.getElementById('brBtn'),
+hint=document.getElementById('hint'), foot=document.getElementById('foot');
+let country='UY';
+
+function selectCountry(c){
+  country=c;
+  uyBtn.style.background=c==='UY'?'#25d366':'#202c33'; uyBtn.style.color=c==='UY'?'#062d16':'#e9edef';
+  brBtn.style.background=c==='BR'?'#25d366':'#202c33'; brBtn.style.color=c==='BR'?'#062d16':'#e9edef';
+  if(c==='UY'){
+    input.placeholder='099 123 456';
+    hint.textContent='Podés escribir 099123456, 59899123456 o +59899123456.';
+    foot.textContent='Uruguay · código +598 automático';
+  } else {
+    input.placeholder='51 99999 9999';
+    hint.textContent='Escribí DDD + número. Ejemplo: 51 99999-9999. También acepta +55.';
+    foot.textContent='Brasil · código +55 automático';
+  }
+  error.textContent=''; input.focus();
+}
+uyBtn.onclick=()=>selectCountry('UY'); brBtn.onclick=()=>selectCountry('BR');
+
+function normalize(raw){
+  let n=(raw||'').replace(/\D/g,'');
+  if(!n) throw new Error('Escribí un número.');
+  if(country==='UY'){
+    if(n.startsWith('00598')) n=n.slice(2);
+    if(n.startsWith('598')) n=n.slice(3);
+    if(n.startsWith('0')) n=n.slice(1);
+    if(n.length!==8 || !n.startsWith('9')) throw new Error('Revisá el número uruguayo. Ejemplo: 099123456.');
+    return '598'+n;
+  }
+  if(n.startsWith('0055')) n=n.slice(2);
+  if(n.startsWith('55')) n=n.slice(2);
+  while(n.startsWith('0')) n=n.slice(1);
+  if(n.length!==10 && n.length!==11) throw new Error('Revisá el número brasileño. Usá DDD + número, por ejemplo 51 99999-9999.');
+  return '55'+n;
+}
+function openWhatsApp(){
+  error.textContent='';
+  try{
+    const number=normalize(input.value);
+    let url='https://wa.me/'+number;
+    const text=message.value.trim();
+    if(text) url+='?text='+encodeURIComponent(text);
+    window.location.href=url;
+  }catch(e){ error.textContent=e.message; input.focus(); }
+}
+btn.onclick=openWhatsApp;
+input.addEventListener('keydown',e=>{if(e.key==='Enter')openWhatsApp();});
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
